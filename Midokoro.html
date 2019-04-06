@@ -1,0 +1,124 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>見どころ</title>
+</head>
+<body onload="initialize()">
+    <table>
+        <tr>
+            <td rowspan="3">
+                <textarea id="txtHist" cols="30" rows="20" tabindex="1"></textarea>
+            </td>
+            <td>
+                <input id="btnStart" type="button" value="開始" onclick="startstop()" tabindex="3" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <input id="btnStop" type="button" value="停止" onclick="setup()" tabindex="4" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <input id="btnAddTime" type="button" value="←追加" onclick="addTime()" tabindex="5" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <input id="txtTime" type="text" onchange="changeTime()" value="00:00:00" tabindex="2" />
+            </td>
+            <td></td>
+        </tr>
+    </table>
+
+    <script type="text/javascript">
+        var STATUS_STOP = "開始";
+        var STATUS_RUN = "一時停止";
+        var STATUS_PAUSE = "再開";
+
+        var startTime = null;
+        var timeHour = 0;
+        var timeMin = 0;
+        var timeSec = 0;
+        var intervalID;
+        var currentTime = "00:00:00";
+
+        function initialize() {
+            setup();
+        }
+
+        function setup() {
+            clearInterval(intervalID);
+            document.getElementById("btnStart").value = STATUS_STOP;
+            startTime = null;
+            timeHour = 0;
+            timeMin = 0;
+            timeSec = 0;
+            document.getElementById("txtTime").value = currentTime = "00:00:00";
+            focusHist();
+        }
+
+        function refresh() {
+            var time = "00:00:00";
+            if (startTime != null) {
+                var currentTime = new Date();
+                var tmpDiffTime = parseInt((currentTime.getTime() - startTime.getTime()) / 1000);
+                timeHour = parseInt(tmpDiffTime / 3600);
+                timeMin = parseInt((tmpDiffTime / 60) % 60);
+                timeSec = parseInt(tmpDiffTime % 60);
+                time = ("00" + timeHour).slice(-2) + ":" + ("00" + timeMin).slice(-2) + ":" + ("00" + timeSec).slice(-2);
+            }
+            document.getElementById("txtTime").value = currentTime = time;
+        }
+
+        function startstop() {
+            if (document.getElementById("btnStart").value == STATUS_RUN) {
+                clearInterval(intervalID);
+                document.getElementById("btnStart").value = STATUS_PAUSE;
+            } else {
+                intervalID = setInterval("refresh()", 1000);
+                startTime = new Date();
+                startTime.setHours(startTime.getHours() - timeHour);
+                startTime.setMinutes(startTime.getMinutes() - timeMin);
+                startTime.setSeconds(startTime.getSeconds() - timeSec);
+                document.getElementById("btnStart").value = STATUS_RUN;
+            }
+            focusHist();
+        }
+
+        function changeTime() {
+            var tmpTime = document.getElementById("txtTime").value;
+            for (var i = 0; i < 2; i++) {
+                tmpTime = (" " + tmpTime + " ").replace(/([^\d])(\d)([^\d])/g, "$10$2$3").trim();
+            }
+            if (tmpTime.match(/^\d{2}:\d{2}:\d{2}$/) == null ||
+                parseInt(tmpTime.slice(3, 5)) >= 60 ||
+                parseInt(tmpTime.slice(-2)) >= 60) {
+                document.getElementById("txtTime").value = currentTime;
+                return;
+            }
+            timeHour = parseInt(tmpTime.slice(0, 2));
+            timeMin = parseInt(tmpTime.slice(3, 5));
+            timeSec = parseInt(tmpTime.slice(-2));
+            currentTime = document.getElementById("txtTime").value = tmpTime;
+        }
+
+        function addTime() {
+            var header = "";
+            if (document.getElementById("txtHist").value != "") {
+                header = "\r\n";
+            }
+            document.getElementById("txtHist").value += header + document.getElementById("txtTime").value + " ";
+            focusHist();
+        }
+
+        function focusHist() {
+            document.getElementById("txtHist").focus();
+            document.getElementById("txtHist").value += "";
+            document.getElementById("txtHist").scrollTop = document.getElementById("txtHist").scrollHeight;
+        }
+    </script>
+</body>
+</html>
